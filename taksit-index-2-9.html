@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Taksit Hesaplama</title>
+  <style>
+    body{
+      font-family: Arial, sans-serif;
+      max-width: 820px;
+      margin: 40px auto;
+      padding: 0 16px;
+      background:#fff;
+    }
+    .card{
+      border:1px solid #ddd;
+      border-radius:14px;
+      padding:18px;
+    }
+    label{
+      display:block;
+      margin-top:14px;
+      font-weight:600;
+    }
+    input, button{
+      width:100%;
+      padding:12px;
+      margin-top:6px;
+      border:1px solid #ccc;
+      border-radius:12px;
+      font-size:16px;
+    }
+    button{
+      margin-top:16px;
+      background:#000;
+      color:#fff;
+      cursor:pointer;
+      border:none;
+    }
+    button:hover{ opacity:0.9; }
+    .muted{
+      color:#666;
+      font-size:13px;
+      margin-top:10px;
+    }
+    .table-wrap{ margin-top:18px; overflow-x:auto; }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+    th, td{
+      border:1px solid #e5e5e5;
+      padding:10px 12px;
+      text-align:left;
+      font-size:15px;
+      white-space: nowrap;
+    }
+    th{
+      background:#f6f6f6;
+      font-weight:700;
+    }
+    .right{ text-align:right; }
+    .center{ text-align:center; }
+    .note{
+      margin-top:14px;
+      padding:12px;
+      background:#f6f6f6;
+      border-radius:12px;
+      line-height:1.7;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Taksit Hesaplama</h2>
+
+<div class="card">
+  <label>Ürün Fiyatı</label>
+  <input id="price" type="number" placeholder="Örn: 20000" inputmode="decimal" />
+
+  <button id="btn">Hesapla</button>
+  <div class="muted">Fiyat girildikten sonra 2–9 taksit seçenekleri otomatik listelenir.</div>
+
+  <div class="table-wrap" id="out"></div>
+</div>
+
+<script>
+  const commissions = {
+    2: 5.61,
+    3: 7.48,
+    4: 9.35,
+    5: 11.21,
+    6: 13.08,
+    7: 14.95,
+    8: 16.82,
+    9: 18.69
+  };
+
+  const priceEl = document.getElementById("price");
+  const outEl = document.getElementById("out");
+  const btn = document.getElementById("btn");
+
+  function formatTL(n){
+    return n.toLocaleString("tr-TR", {maximumFractionDigits:2}) + " ₺";
+  }
+
+  function render(){
+    const price = Number(priceEl.value);
+    if(!price || price <= 0){
+      outEl.innerHTML = "";
+      return;
+    }
+
+    const rows = Object.keys(commissions)
+      .map(Number)
+      .sort((a,b)=>a-b)
+      .map(months => {
+        const rate = commissions[months];
+        const total = price * (1 + rate/100);
+        const monthly = total / months;
+        const feeAmount = total - price;
+
+        return `
+          <tr>
+            <td class="center">${months}</td>
+            <td class="center">%${rate.toFixed(2)}</td>
+            <td class="right">${formatTL(price)}</td>
+            <td class="right">${formatTL(feeAmount)}</td>
+            <td class="right"><b>${formatTL(total)}</b></td>
+            <td class="right"><b>${formatTL(monthly)}</b></td>
+          </tr>
+        `;
+      }).join("");
+
+    outEl.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th class="center">Taksit</th>
+            <th class="center">Komisyon</th>
+            <th class="right">Fiyat</th>
+            <th class="right">Komisyon Tutarı</th>
+            <th class="right">Toplam Tutar</th>
+            <th class="right">Aylık Taksit</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div class="note">
+        <b>Not:</b> Taksitlerimiz sadece İş bankasından yapılabilir.
+      </div>
+    `;
+  }
+
+  btn.addEventListener("click", render);
+  priceEl.addEventListener("input", render);
+  priceEl.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") render();
+  });
+</script>
+
+</body>
+</html>
